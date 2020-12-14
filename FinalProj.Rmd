@@ -1,0 +1,244 @@
+---
+title: "Final Project Preliminary EDA"
+author: "Cinah"
+date: "11/15/2020"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+```
+
+
+```{r}
+pres <- read.csv(file = "1976-2016-president.csv")
+head(pres)
+```
+```{r}
+senate <- read.csv(file = "1976-2018-senate.csv")
+head(senate)
+```
+
+
+### Guiding Question
+
+How has the relationship between the Presidential and Senate elections changed throughout the years of 1976-2016?
+
+### Data Source Information
+
+
+##### Where did you find them?
+I found these data sources on Harvard's Dataverse.
+
+##### Who collected/maintains them?
+MIT Election Data and Science Lab collected and maintains the data.
+
+```{r}
+str(pres)
+```
+
+
+##### When & Why were they originally collected?
+The data has been collected consistently every 4 years for the Presidential elections starting from the year 1976 until 2016 and every 2 years for US Senate elections starting from 1976 until 2016. This data file contains constituency (state-level) returns for elections to the U.S. Senate and Presidential office from 1976 to 2018. It was originally collected to keep track of the election data in the cases of US Senate elections as well as the Presidential election.
+
+##### What does a case represent in each data source, and how many total cases are available?
+In the Presidential dataset, a case is represented by a particular year, state, candidate, and their respective party. There are a total of 3740 cases in the dataset.
+In the Senate dataset, a case is represented by a particular year, state, candidate, and their respective party. There are a total of 3421 cases in the dataset.
+
+```{r}
+str(senate)
+```
+
+
+##### What are some of the variables that you plan to use?
+I plan to use variables such as year, state, candidate, party, candidatevotes, and totalvotes in both datasets.
+
+## Summary and Plots
+
+Presidential Summary:
+```{r}
+summary(pres)
+```
+The summary lists the statistics of each variable, listing its type and showing a breakdown of its components if it is a numerical variable.
+
+Scatterplot for President data:
+```{r}
+TotalVotesinPres <- pres %>% 
+  group_by(year) %>%
+  summarise(totalvotesP = sum(totalvotes))
+TotalVotesinPres
+TotalVotesinPresG<- ggplot(TotalVotesinPres, aes(x=year, y=totalvotesP, color = year)) +
+  geom_point() + geom_smooth(method = lm) + ggtitle("Total Votes in each Year \nin the Presidential Election \n(from 1976-2016)")+ labs(y="Number of Votes", x = "Year")
+TotalVotesinPresG
+```
+
+
+
+This plot shows us the increase in total voting numbers and voter participation in elections. As time progressed, number of votes in each election also increased in a relatively steady manner. The Number of votes in the presidential elections hits a peak value of about 1 billion votes.
+
+
+
+Senate Summary:
+```{r}
+summary(senate)
+```
+The summary lists the statistics of each variable, listing its type and showing a breakdown of its components if it is a numerical variable.
+
+
+Scatterplot for Senate Data:
+```{r}
+TotalVotesinSen <- senate %>% 
+  group_by(year) %>%
+  summarise(totalvotesS = sum(totalvotes))
+TotalVotesinSen
+TotalVotesinSenG <- ggplot(TotalVotesinSen, aes(x=year, y=totalvotesS, color = year)) +
+  geom_point() + geom_smooth(method = lm) + ggtitle("Total Votes in each Year \nin the Senate Election \n(from 1976-2016)")+ labs(y="Number of Votes", x = "Year")
+TotalVotesinSenG
+```
+
+Here we also see that total voter participation in each election increased for each Senate election as time progressed, but it is not as apparent or as steady of an increase compared to the trend seen in the presidential plot. This is shown by the line of fit which is not as positively sloped as the line for the presidential plot, also the smoother is wider in this case due to the more scattered points in this plot. Also the number of votes in the senate elections hits a peak of about 700 million votes, which is significantly less than the peak observed in the presidential election (1 billion votes).
+
+
+###Distribution in Votes in the Presidential Election for the Democratic and Republican Parties
+
+```{r}
+demvotes <- filter(pres, party=="democrat")
+repvotes <- filter(pres, party=="republican")
+demvotesbyyear <- demvotes %>% 
+  group_by(year) %>%
+  summarise(totaldemvotes = sum(candidatevotes))
+demvotesbyyear
+repvotesbyyear <- repvotes %>% 
+  group_by(year) %>%
+  summarise(totalrepvotes = sum(candidatevotes))
+repvotesbyyear
+drvotesbyyear <- full_join(demvotesbyyear, repvotesbyyear, by="year")
+drvotesbyyear
+
+dfdrvotesbyyear <- gather(drvotesbyyear, partyvotes, totalvotes, totaldemvotes:totalrepvotes)
+dfdrvotesbyyear
+
+totalvotesbyparty <- ggplot(dfdrvotesbyyear, aes(year, totalvotes, fill=partyvotes))
+totalvotesbyparty <- totalvotesbyparty + geom_bar(stat = "identity", position = 'dodge')
+ftotalvotesbyparty <- print(totalvotesbyparty + ggtitle("Total Votes in each Year \n for Republican and Democratic Parties \nin the Presidential Elections \n(from 1976-2016)"))+ labs(y="Number of Votes", x = "Year")
+ftotalvotesbyparty
+```
+From this visual, we can see that most in most Presidential election years there was almost an even distribution in voter participation between the Democratic and Republican parties. The most significant disparity in votes between the two parties appears in 1984 where we can see a larger divide in favor of more votes going towards the Republican party.
+
+
+###Distribution in Votes in the Senate Election for the Democratic and Republican Parties
+
+```{r}
+demvotes1 <- filter(senate, party=="democrat")
+repvotes1 <- filter(senate, party=="republican")
+demvotesbyyear1 <- demvotes1 %>% 
+  group_by(year) %>%
+  summarise(totaldemvotes = sum(candidatevotes))
+demvotesbyyear1
+repvotesbyyear1 <- repvotes1 %>% 
+  group_by(year) %>%
+  summarise(totalrepvotes = sum(candidatevotes))
+repvotesbyyear1
+drvotesbyyear1 <- full_join(demvotesbyyear1, repvotesbyyear1, by="year")
+drvotesbyyear1
+
+dfdrvotesbyyear1 <- gather(drvotesbyyear1, partyvotes, totalvotes, totaldemvotes:totalrepvotes)
+dfdrvotesbyyear1
+
+totalvotesbyparty1 <- ggplot(dfdrvotesbyyear1, aes(year, totalvotes, fill=partyvotes))
+totalvotesbyparty1 <- totalvotesbyparty1 + geom_bar(stat = "identity", position = 'dodge')
+ftotalvotesbyparty1 <- print(totalvotesbyparty1 + ggtitle("Total Votes in each Year \n for Republican and Democratic Parties \nin the Senate Elections \n(from 1976-2016)"))+ labs(y="Number of Votes", x = "Year")
+ftotalvotesbyparty1
+```
+From this visual, we can see that most in most Senate election years there was almost an even distribution in voter participation between the Democratic and Republican parties as well. In contrast to the Presidential election, there are a few years where there is a larger divide between the voting distribution between the two parties. In the years 1976, 2012, 2014, and 2016 there is a more significant disparity in votes between the two parties where we can see a larger divide in favor of more votes going towards the Democratic party.
+
+###Democratic Votes Throughout the Years in the Presidential Elections
+
+```{r}
+ggplot(demvotesbyyear, aes(x = year, y = totaldemvotes, color = year)) +
+    geom_line() +
+    theme_classic() +
+    labs(
+        x = "Year",
+        y = "Number of Democratic Votes",
+        title = paste(
+            "Amount of Democratic votes in the \nPresidential Elections from 1976 to 2016"
+        )
+    )
+```
+In this visual we are only looking at democratic voting in the Presidential Elections. From this graph, we can see that the amount of democratic votes steadily increased from 1980-2008, 2012-2016. From 1976-1980, there was a decline in the amount of democratic votes, and there is  another decline in the amount of democratic votes from 2008-2012.
+
+
+###Republican Votes Throughout the Years in the Presidential Elections
+
+```{r}
+ggplot(repvotesbyyear, aes(x = year, y = totalrepvotes, color = year)) +
+    geom_line() +
+    theme_classic() +
+    labs(
+        x = "Year",
+        y = "Number of Republican Votes",
+        title = paste(
+            "Amount of Republican votes in the \nPresidential Elections from 1976 to 2016"
+        )
+    )
+```
+In this visual we are only looking at republican voting in the Presidential Elections. From this graph, we can see that the amount of republican votes steadily increased from 1976-1984, 1996-2004, 2008-2016. From 1984-1992, 2004-2008 there was a decline in the amount of republican votes.
+
+
+###Democratic Votes Throughout the Years in the Senate Elections
+
+```{r}
+ggplot(demvotesbyyear1, aes(x = year, y = totaldemvotes, color = year)) +
+    geom_line() +
+    theme_classic() +
+    labs(
+        x = "Year",
+        y = "Number of Democratic Votes",
+        title = paste(
+            "Amount of Democratic votes in the \nSenate Elections from 1976 to 2016"
+        )
+    )
+```
+In this visual we are only looking at democratic voting in the Senate Elections. Compared to the Presidential visuals for this metric shown above, this visual shows much more volatility the number of votes for the democratic party in the senate throughout the years. This could be due to the fact that the Senate elections are every 2 years instead of 4, creating more data points on this graph and therefore more incline and decline portions on the graph. Overall, the amount of democratic votes in the senate almost doubled in the year 2016 (almost 60 million) compared to the beginning in 1976 (about 30 million).
+
+###Republican Votes Throughout the Years in the Senate Elections
+
+```{r}
+ggplot(repvotesbyyear1, aes(x = year, y = totalrepvotes, color = year)) +
+    geom_line() +
+    theme_classic() +
+    labs(
+        x = "Year",
+        y = "Number of Republican Votes",
+        title = paste(
+            "Amount of Republican votes in the \nSenate Elections from 1976 to 2016"
+        )
+    )
+```
+In this visual we are only looking at republican voting in the Senate Elections. Compared to the Presidential visuals for this metric shown above, this visual shows much more volatility the number of votes for the republican party in the senate throughout the years. This again, could be due to the fact that the Senate elections are every 2 years instead of 4, creating more data points on this graph and therefore more incline and decline portions on the graph. Comparing this visual to the visual above (for the amount of democratic votes throughout the years in the senate), the visuals almost show the same pattern but with a difference in the number of votes between the two graphs. The democratic party had a significantly larger amount of votes at key points throughout the years (examples: started with about 30 million in 1976 where the republican party started with about 25 million number of votes and also in 2016, the democratic number of votes in the senate was about 60 million compared to the republican number of votes being about 35 million). Overall, the amount of republican votes in the senate only increased by about 10 million (from 1976-2016) whereas the democratic votes had almost doubled between the same period.
+
+###Use of Regex to Find cases of Jimmy Carter in the User Created "Demvotes" Table
+```{r}
+VotesforCarter <- gregexpr("Jimmy Carter", demvotes)
+VotesforCarter
+```
+Regex expression above found starting position and length of all matches for Jimmy Carter in the demvotes table created above. 
+
+
+##Conclusion
+
+Ultimately, when looking at both of these datasets and comparing the different visuals and metrics, I realized that the two datasets show very similar results as shown by the graphics created above. The major difference is in the magnitude category where the presidential election seems to have more significance to voters so it recieves larger turnouts and therefore more voter participation leading to increased values in these elections. Another difference I encountered was that since the Senate elections happened every two years, there were a lot more data points on these corresponding graphs and therefore there were more volatile charts created from the Senate dataset, this made it more difficult to try to claim trends in the visuals from this dataset and make proper conclusions. My biggest challenge was comparing the two datasets and setting the user defined tables in the beginning, I overcame this issue by separating the two datasets and their corresponding plots due to the difference in the intervals of time (presidential every four years while senate every two years). Also creating tables using data wrangling methods made it easier for me to target the metrics and variables I was after to be able to then use in the plots created. Overall I enjoyed the project a lot since it gave me the opportunity to use all the skills I learned in the class in a scenario where I could answer questions about real world data that I had and the freedom to do this was very beneficial. Thank you.
+
+
+
+
+
+
+
+
